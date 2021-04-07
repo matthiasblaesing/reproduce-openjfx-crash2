@@ -36,7 +36,7 @@ public class TestBrowserImpl extends Application {
         root.setCenter(webview);
 
         // Invoke minimal reproducer - crashes when loaded
-        webview.getEngine().load("http://localhost:8000/test.html");
+        webview.getEngine().load(TestBrowser.class.getResource("/test.html").toExternalForm());
 
         primaryStage.setScene(scene);
         primaryStage.setWidth(1024);

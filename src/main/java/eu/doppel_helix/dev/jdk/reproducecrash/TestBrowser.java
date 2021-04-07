@@ -1,13 +1,8 @@
 package eu.doppel_helix.dev.jdk.reproducecrash;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
-import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -15,18 +10,6 @@ import java.util.Set;
 public class TestBrowser {
 
     public static void main(String[] args) throws Exception {
-        // Setup example server that serves a site, that uses local storage
-        // to force instantiation of FileSystem
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-        server.createContext("/test.html", (HttpExchange he) -> {
-            byte[] result = "<html><body><script>localStorage.setItem('myCat', 'Tom');</script><h1>Done</h1></body></html>".getBytes(StandardCharsets.UTF_8);
-            he.sendResponseHeaders(200, result.length);
-            try(OutputStream os = he.getResponseBody()) {
-                os.write(result);
-            }
-        });
-        server.start();
-
         // Setup a module layer for OpenJFX and the test class
 
         // Hack to get the classes of this programm into a module layer
