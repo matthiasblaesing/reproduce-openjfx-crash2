@@ -35,10 +35,8 @@ public class TestBrowserImpl extends Application {
         WebView webview = new WebView();
         root.setCenter(webview);
 
-        String script
-            = "<html><body><img src=\"data:image/gif;base64,R0lGODdhEAAQAMwAAPj7+FmhUYjNfGuxYYDJdYTIeanOpT+DOTuANXi/bGOrWj6CONzv2sPjv2CmV1unU4zPgISg6DJnJ3ImTh8Mtbs00aNP1CZSGy0YqLEn47RgXW8amasW7XWsmmvX2iuXiwAAAAAEAAQAAAFVyAgjmRpnihqGCkpDQPbGkNUOFk6DZqgHCNGg2T4QAQBoIiRSAwBE4VA4FACKgkB5NGReASFZEmxsQ0whPDi9BiACYQAInXhwOUtgCUQoORFCGt/g4QAIQA7\"/></body></html>";
-
-        webview.getEngine().loadContent(script);
+        // Invoke minimal reproducer - crashes when loaded
+        webview.getEngine().load("http://localhost:8000/test.html");
 
         primaryStage.setScene(scene);
         primaryStage.setWidth(1024);

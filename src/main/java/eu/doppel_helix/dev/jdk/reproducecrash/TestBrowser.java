@@ -1,8 +1,13 @@
 package eu.doppel_helix.dev.jdk.reproducecrash;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -10,32 +15,28 @@ import java.util.Set;
 public class TestBrowser {
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("javafx.verbose", "true");
-        System.setProperty("java.library.path", "");
+        // Setup example server that serves a site, that uses local storage
+        // to force instantiation of FileSystem
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server.createContext("/test.html", (HttpExchange he) -> {
+            byte[] result = "<html><body><script>localStorage.setItem('myCat', 'Tom');</script><h1>Done</h1></body></html>".getBytes(StandardCharsets.UTF_8);
+            he.sendResponseHeaders(200, result.length);
+            try(OutputStream os = he.getResponseBody()) {
+                os.write(result);
+            }
+        });
+        server.start();
 
-        /*
-         * Setup a module layer for OpenJFX and the test class
-         */
+        // Setup a module layer for OpenJFX and the test class
 
         // Hack to get the classes of this programm into a module layer
         Path selfPath = Paths.get(TestBrowser.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        Path mavenRepositoryPath = Paths.get(System.getProperty("user.home"), ".m2/repository");
         ModuleFinder finder = ModuleFinder.of(
-            mavenRepositoryPath.resolve("org/openjfx/javafx-base/13/javafx-base-13-linux.jar"),
-            mavenRepositoryPath.resolve("org/openjfx/javafx-controls/13/javafx-controls-13-linux.jar"),
-            mavenRepositoryPath.resolve("org/openjfx/javafx-graphics/13/javafx-graphics-13-linux.jar"),
-            mavenRepositoryPath.resolve("org/openjfx/javafx-media/13/javafx-media-13-linux.jar"),
-            // This crashes
-            mavenRepositoryPath.resolve("org/openjfx/javafx-web/13/javafx-web-13-linux.jar"),
-            // This points to a javafx-web-13-linux.jar, that is patched
-            // it will not crash
-//            Paths.get("/home/matthias/src/jfx/build/publications/javafx.web-linux.jar"),
+            Paths.get(System.getProperty("javafx.sdk.path")),
             selfPath
         );
 
-        /*
-         * Load the application as a named module and invoke it
-         */
+        // Load the application as a named module and invoke it
         ModuleLayer parent = ModuleLayer.boot();
         Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), Set.of("ReproduceOpenjfxCrash2"));
         ClassLoader scl = ClassLoader.getSystemClassLoader();
